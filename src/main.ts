@@ -1,6 +1,6 @@
-import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
-import { Transport } from '@nestjs/microservices';
+import {ValidationPipe, ClassSerializerInterceptor} from '@nestjs/common';
+import {NestFactory, Reflector} from '@nestjs/core';
+import {Transport} from '@nestjs/microservices';
 import {
     NestExpressApplication,
     ExpressAdapter,
@@ -14,12 +14,24 @@ import {
     patchTypeORMRepositoryWithBaseRepository,
 } from 'typeorm-transactional-cls-hooked';
 
-import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './filters/bad-request.filter';
-import { QueryFailedFilter } from './filters/query-failed.filter';
-import { ConfigService } from './shared/services/config.service';
-import { SharedModule } from './shared/shared.module';
-import { setupSwagger } from './viveo-swagger';
+import {AppModule} from './app.module';
+import {HttpExceptionFilter} from './filters/bad-request.filter';
+import {QueryFailedFilter} from './filters/query-failed.filter';
+import {ConfigService} from './shared/services/config.service';
+import {SharedModule} from './shared/shared.module';
+import {setupSwagger} from './viveo-swagger';
+import {IoAdapter} from "@nestjs/platform-socket.io";
+import * as redisIoAdapter from 'socket.io-redis';
+
+const redisAdapter = redisIoAdapter({host: 'localhost', port: 6379});
+
+export class RedisIoAdapter extends IoAdapter {
+    createIOServer(port: number, options?: any): any {
+        const server = super.createIOServer(port, options);
+        server.adapter(redisAdapter);
+        return server;
+    }
+}
 
 async function bootstrap() {
     initializeTransactionalContext();
@@ -27,8 +39,11 @@ async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(
         AppModule,
         new ExpressAdapter(),
-        { cors: true },
+        {cors: true},
     );
+
+    app.useWebSocketAdapter(new RedisIoAdapter(app));
+
     // app.enable('trust proxy'); // only if you're behind a reverse proxy (Heroku, Bluemix, AWS ELB, Nginx, etc)
     app.use(helmet());
     app.use(
@@ -70,6 +85,13 @@ async function bootstrap() {
             retryDelay: 3000,
         },
     });
+
+    // app.connectMicroservice({
+    //     transport: Transport.REDIS,
+    //     options: {
+    //         url: 'redis://localhost:6379',
+    //     },
+    // });
 
     await app.startAllMicroservicesAsync();
 

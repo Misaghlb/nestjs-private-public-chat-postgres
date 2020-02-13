@@ -12,6 +12,12 @@ import * as socketioJwt from 'socketio-jwt';
 
 import {UserService} from '../user/user.service';
 import {ConfigService} from '../../shared/services/config.service';
+import {AuthUser} from "../../decorators/auth-user.decorator";
+import {UserEntity} from "../user/user.entity";``
+import {ChatService} from "./chat.service";
+import {CreateMessageDto} from "./dto/createMessageDto";
+import {Client, ClientProxy, Transport} from "@nestjs/microservices";
+import {RedisService} from "nestjs-redis";
 
 // import {JwtGuard} from "../auth/wsjwt.guard";
 
@@ -24,8 +30,18 @@ export class ChatGateway
     constructor(
         public readonly configService: ConfigService,
         public readonly userService: UserService,
+        private _chatService: ChatService,
+        private readonly redisService: RedisService,
     ) {
     }
+
+    // @Client({
+    //     transport: Transport.REDIS, options: {
+    //         url: 'redis://localhost:6379',
+    //     }
+    // })
+    // redisClient: ClientProxy;
+
 
     @WebSocketServer()
     server: Server;
@@ -44,19 +60,28 @@ export class ChatGateway
 
     // @UseGuards(WsAuthGuard)
     @SubscribeMessage('msgToServer')
-    handleMessage(client: Socket, payload): void {
+    async handleMessage(client: Socket, payload: CreateMessageDto) {
         // const {user, ...result} = payload;
-        console.log(client.request.user);
-
+        // console.log(client.request.user);
+        await this._chatService.createToken(payload, client.request.user);
         // this.logger.log(payload, 'msgToServer');
-        this.server.emit('msgToClient', payload);
+        const ans = {"name": client.request.user.email, "text": payload.text};
+        // console.log(this.server.clients().sockets);
+        // const tt = await this.redisService.getClient().get(`users:${client.request.user.id}`);
+        const tt = await this.redisService.getClient().get(`users:${payload.receiver}`);
+        console.log(tt);
+        if (tt) {
+            // this.server.emit('msgToClient', ans);
+            this.server.to(tt).emit('msgToClient', ans);
+        }
     }
 
     afterInit(server: Server) {
         this.logger.log('Init');
     }
 
-    handleDisconnect(client: Socket) {
+    async handleDisconnect(client: Socket) {
+        await this.redisService.getClient().del(`users:${client.request.user.id}`);
         this.logger.log(`Client disconnected: ${client.id}`);
     }
 
@@ -79,6 +104,7 @@ export class ChatGateway
             throw new UnauthorizedException();
         }
         client.request.user = user;
+        await this.redisService.getClient().set(`users:${client.request.user.id}`, client.id, 'NX', 'EX', 30);
 
         this.logger.log(`Client connected: ${client.id}`);
     }

@@ -20,7 +20,6 @@ export class ChatService {
     }
 
     async createToken(msg: CreateMessageDto, sender): Promise<string> {
-        console.log(msg);
         let created_msg = this.messageRepository.create({...msg});
 
         created_msg.sender = sender;
