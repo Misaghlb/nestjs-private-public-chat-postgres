@@ -1,13 +1,12 @@
 import {Injectable} from '@nestjs/common';
-import {UserEntity} from "../user/user.entity";
-import {UserDto} from "../user/dto/UserDto";
-import {TokenPayloadDto} from "../auth/dto/TokenPayloadDto";
-import {MessageEntity} from "./message.entity";
-import {MessageDto} from "./dto/MessageDto";
 import {MessageRepository} from "./message.repository";
 import {InjectRepository} from "@nestjs/typeorm";
 import {UserRepository} from "../user/user.repository";
 import {CreateMessageDto} from "./dto/createMessageDto";
+import {RoomRepository} from "./room.repository";
+import {MessageEntity} from "./message.entity";
+import {UserEntity} from "../user/user.entity";
+import {RoomEntity} from "./room.entity";
 
 @Injectable()
 export class ChatService {
@@ -16,20 +15,56 @@ export class ChatService {
         public readonly messageRepository: MessageRepository,
         @InjectRepository(UserRepository)
         public readonly userRepository: UserRepository,
+        @InjectRepository(RoomRepository)
+        public readonly roomRepository: RoomRepository,
     ) {
     }
 
-    async createToken(msg: CreateMessageDto, sender): Promise<string> {
-        let created_msg = this.messageRepository.create({...msg});
+    // deprecated
+    // async createMessage(msg: CreateMessageDto, sender): Promise<MessageEntity> {
+    //     let created_msg = this.messageRepository.create(msg);
+    //     created_msg.sender = sender;
+    //     return this.messageRepository.save(created_msg);
+    //
+    // }
 
-        created_msg.sender = sender;
-        await this.messageRepository.save(created_msg);
-        return "sddf"
-        // return new TokenPayloadDto({
-        //     expiresIn: this.configService.getNumber('JWT_EXPIRATION_TIME'),
-        //     accessToken: await this.jwtService.signAsync({ id: user.id }),
-        // });
+    /*
+    * check room if not exists create it, and save the message in room.
+    */
+    async createPrivateMessage(sender: UserEntity, receiver: UserEntity, msg: string): Promise<MessageEntity> {
+        let room = await this.roomRepository.checkPrivateRoomExists(sender, receiver);
+        if (!room) {
+            room = await this.roomRepository.createPrivateRoom(sender, receiver)
+        }
+        return this.messageRepository.save({text: msg, room: room, sender: sender});
     }
+
+    /*
+    * check if user is joined the room before, if yes then save the message in room.
+    */
+    async createPublicRoomMessage(sender: UserEntity, room: RoomEntity, msg: string): Promise<MessageEntity> {
+        let alreadyInRoom = room.members.some(ele => ele.id === sender.id);
+
+        if (!alreadyInRoom) {
+            return;
+        }
+        return this.messageRepository.save({text: msg, room: room, sender: sender});
+    }
+
+    // async createRoom(data: CreateRoomDto, sender): Promise<RoomDto> {
+    //     const createdRoom = await this.roomRepository.createPublicRoom(data, sender);
+    //     return createdRoom.toDto()
+    // }
+
+
+    // async createPrivateRoom(data: CreatePrivateRoomDto): Promise<RoomDto> {
+    //     const createdRoom = await this.roomRepository.createPrivateRoom(data.sender, data.receiver);
+    //     return createdRoom.toDto()
+    // }
+
+    // async joinRoom(room: RoomEntity, user: UserEntity): Promise<boolean> {
+    //     return await this.roomRepository.join(room, user);
+    // }
 
 
     // /**

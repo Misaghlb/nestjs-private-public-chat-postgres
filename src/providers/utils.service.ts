@@ -1,7 +1,9 @@
 import * as bcrypt from 'bcrypt';
 import * as _ from 'lodash';
+import {RedisService} from "nestjs-redis";
 
 export class UtilsService {
+
     /**
      * convert entity to dto class instance
      * @param {{new(entity: E, options: any): T}} model
@@ -50,6 +52,7 @@ export class UtilsService {
             .replace(/[^a-zA-Z0-9]+/g, '')
             .substr(0, length);
     }
+
     /**
      * validate text with hash
      * @param {string} password
@@ -58,5 +61,17 @@ export class UtilsService {
      */
     static validateHash(password: string, hash: string): Promise<boolean> {
         return bcrypt.compare(password, hash || '');
+    }
+
+
+    /**
+     * set user id on redis => key: user.id,  value: socketId
+     * @param redisService
+     * @param userId
+     * @param socketId
+     */
+    static async setUserIdAndSocketIdOnRedis(redisService: RedisService, userId: string, socketId: string) {
+        await redisService.getClient().set(`users:${userId}`, socketId, 'NX', 'EX', 30);
+
     }
 }

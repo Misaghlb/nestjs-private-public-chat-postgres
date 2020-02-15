@@ -68,7 +68,7 @@ export class ConfigService {
             password: this.get('DATABASE_PASSWORD'),
             database: this.get('DATABASE_DATABASE'),
             migrationsRun: true,
-            logging: this.nodeEnv === 'development',
+            // logging: this.nodeEnv === 'development',
             namingStrategy: new SnakeNamingStrategy(),
         };
     }

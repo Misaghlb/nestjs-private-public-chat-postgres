@@ -21,20 +21,20 @@ export class ChatController {
 
 
 
-    @Post('new_msg')
-    @HttpCode(HttpStatus.OK)
-    // @ApiOkResponse({ type: MessageDto, description: 'Successfully Registered' })
-    async createMessage(@AuthUser() user: UserEntity,
-        @Body() messageDto: CreateMessageDto,
-    ): Promise<UserDto> {
-
-        console.log(user);
-        const createdUser = await this._chatService.createToken(
-            messageDto, user
-        );
-
-        return user.toDto();
-    }
+    // @Post('new_msg')
+    // @HttpCode(HttpStatus.OK)
+    // // @ApiOkResponse({ type: MessageDto, description: 'Successfully Registered' })
+    // async createMessage(@AuthUser() user: UserEntity,
+    //     @Body() messageDto: CreateMessageDto,
+    // ): Promise<UserDto> {
+    //
+    //     console.log(user);
+    //     const createdUser = await this._chatService.createMessage(
+    //         messageDto, user
+    //     );
+    //
+    //     return user.toDto();
+    // }
 
     // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImM4YmFjMjBhLWQxMDMtNDM5Yi1iZWEwLWYwZjMxMjlkZDJhZCIsImlhdCI6MTU4MTUxMDcyM30.B8MYG1VeGW9yNCDrlqSe9dLrkARNlhAzL42qAeoUzvU
     /*

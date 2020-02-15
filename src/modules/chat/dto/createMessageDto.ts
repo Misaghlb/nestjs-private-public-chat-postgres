@@ -1,8 +1,7 @@
 'use strict';
 
 import {ApiModelProperty} from '@nestjs/swagger';
-import {IsNotEmpty, IsString,IsUUID} from "class-validator";
-import {UserEntity} from "../../user/user.entity";
+import {IsNotEmpty, IsString} from "class-validator";
 
 export class CreateMessageDto {
     @IsString()
@@ -15,9 +14,13 @@ export class CreateMessageDto {
     // @ApiModelProperty()
     // sender: UserEntity;
 
-    @IsUUID()
+    @IsString()
     @IsNotEmpty()
     @ApiModelProperty()
-    receiver: UserEntity;
+    room_name: string;
 
+    constructor(text, room) {
+        this.text = text;
+        this.room_name = room;
+    }
 }

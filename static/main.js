@@ -8,13 +8,27 @@ const app = new Vue({
         socket: null
     },
     methods: {
+        createPublcRoom() {
+            const message = {
+                name: this.name,
+            };
+            this.socket.emit('createNewPublicRoom', message);
+            this.text = ''
+        },
+        joinPublicRoom() {
+            const message = {
+                name: 'room1',
+            };
+            this.socket.emit('joinPublicRoom', message);
+            this.text = ''
+        },
         sendMessage() {
             if (this.validateInput()) {
                 const message = {
-                    name: this.name,
+                    room_name: 'room1',
                     text: this.text
-                }
-                this.socket.emit('msgToServer', message)
+                };
+                this.socket.emit('msgToRoomServer', message);
                 this.text = ''
             }
         },
@@ -22,9 +36,9 @@ const app = new Vue({
             if (this.validateInput()) {
                 const message = {
                     text: this.text,
-                    receiver: "abe95179-2ffb-4fd4-bbfa-e69e08e4e450"
+                    receiver: "38856fc3-586b-4aca-97dd-9d13fc0c7580"
                 };
-                this.socket.emit('msgToServer', message);
+                this.socket.emit('msgPrivateToServer', message);
                 this.text = ''
             }
         },
@@ -37,12 +51,33 @@ const app = new Vue({
     },
     created() {
         this.socket = io('http://localhost:3000', {
-            // 'query': 'token=' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImM4YmFjMjBhLWQxMDMtNDM5Yi1iZWEwLWYwZjMxMjlkZDJhZCIsImlhdCI6MTU4MTUxNjE5MX0.n_bZ2nBjgAq2SjJ-lCr-wkOKkG_8ku4yXsIzbB8ohDA'
-            'query': 'token=' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFiZTk1MTc5LTJmZmItNGZkNC1iYmZhLWU2OWUwOGU0ZTQ1MCIsImlhdCI6MTU4MTUxNjIzNn0.1jh05-cPk1OqwWkrGWeD164o7jF0gijoOsmaSGh76MI'
+            // 'query': 'token=' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM4ODU2ZmMzLTU4NmItNGFjYS05N2RkLTlkMTNmYzBjNzU4MCIsImlhdCI6MTU4MTYxODI3Nn0.zvHEzdSYrs_VpCCiFA37fBOkafpC1lI-axOhkcfpmxw'
+            'query': 'token=' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE2ZDUxMzM5LWJjZTctNDQ1Mi1hY2E0LTdmMzUyMjEyNWM5MSIsImlhdCI6MTU4MTYxODMxMH0.K4D4FSODoRrmT6NQnh8d9XzhBhtDudestY98SRe62lA'
 
+        });
+        this.socket.on('connect', (message) => {
+            // this.receivedMessage(message)
+            console.log(message);
+            console.log('connected');
         });
         this.socket.on('msgToClient', (message) => {
             this.receivedMessage(message)
-        })
+        });
+
+        this.socket.on('msgPrivateToClient', (message) => {
+            this.receivedMessage(message)
+        });
+
+        this.socket.on('createdNewPublicRoom', (message) => {
+            console.log(message);
+        });
+        this.socket.on('msgToRoomClient', (message) => {
+            console.log(message);
+            this.receivedMessage(message);
+        });
+        this.socket.on('userJoined', (message) => {
+            console.log(message);
+            this.receivedMessage(message);
+        });
     }
 });
