@@ -1,5 +1,7 @@
-import {Logger, OnModuleInit, UnauthorizedException,} from '@nestjs/common';
+import {Logger, OnModuleInit, UnauthorizedException, UsePipes, ValidationPipe,} from '@nestjs/common';
 import {
+    ConnectedSocket,
+    MessageBody,
     OnGatewayConnection,
     OnGatewayDisconnect,
     OnGatewayInit,
@@ -25,10 +27,9 @@ import {AuthService} from "../auth/auth.service";
 import {RoomEntity} from "./room.entity";
 import {JoinRoomDto} from "./dto/joinRoomDto";
 
-``
 
 // import {JwtGuard} from "../auth/wsjwt.guard";
-
+@UsePipes(ValidationPipe)
 @WebSocketGateway()
 export class ChatGateway
     implements OnGatewayInit,
@@ -111,7 +112,7 @@ export class ChatGateway
 
 
     @SubscribeMessage('joinPublicRoom')
-    async handleJoinRoom(client: Socket, payload: JoinRoomDto) {
+    async handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() payload: JoinRoomDto) {
         const room: RoomEntity = await this.roomRepository.findOne({name: payload.name}, {relations: ['members']});
         if (!room) {
             console.log('room not found');
@@ -132,17 +133,15 @@ export class ChatGateway
 
     @SubscribeMessage('msgToRoomServer')
     async handleRoomMessage(client: Socket, payload: CreateMessageDto) {
-        console.log(payload);
-
-        // const room = await this.roomRepository.findOne(payload.room_name, {relations: ['members']});
-        const room = await this.roomRepository.findOne({where: {name: payload.room_name, isPrivate: false}, relations: ['members']});
+        const room = await this.roomRepository.findOne({
+            where: {name: payload.room_name, isPrivate: false},
+            relations: ['members']
+        });
 
         if (!room) {
-            console.log('room not found');
+            this.logger.log('room not found');
             return;
         }
-        console.log('creating');
-
         const createdMessage = await this._chatService.createPublicRoomMessage(client.request.user, room, payload.text);
         const answerPayload = {"name": client.request.user.email, "text": payload.text};
         this.server.to(createdMessage.room.name).emit('msgToRoomClient', answerPayload);
