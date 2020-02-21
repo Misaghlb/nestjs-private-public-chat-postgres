@@ -76,3 +76,4 @@ mongo
 # Docker compose ganarated files
 db-data
 /src/migrations/
+.development.env
