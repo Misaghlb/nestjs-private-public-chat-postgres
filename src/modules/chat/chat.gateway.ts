@@ -130,6 +130,22 @@ export class ChatGateway
         this.server.to(room.name).emit('userJoined', answerPayload);
     }
 
+    @SubscribeMessage('getRooms')
+    async handleGetRooms(@ConnectedSocket() client: Socket, payload) {
+        const pvrooms: RoomEntity[] = await this.roomRepository.find({
+            where: {isPrivate: true},
+            relations: ['members']
+        },);
+        const pubrooms: RoomEntity[] = await this.roomRepository.find({where: {isPrivate: false}});
+        pvrooms.forEach(value => {
+            if (value.isPrivate) {
+                value.name = value.members[0].email
+            }
+        });
+        // console.log(rooms);
+        client.emit('getRooms', [...pvrooms, ...pubrooms]);
+    }
+
 
     @SubscribeMessage('msgToRoomServer')
     async handleRoomMessage(client: Socket, payload: CreateMessageDto) {

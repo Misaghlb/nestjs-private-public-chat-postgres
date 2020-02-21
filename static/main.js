@@ -5,6 +5,7 @@ const app = new Vue({
         name: '',
         text: '',
         messages: [],
+        rooms: [],
         socket: null
     },
     methods: {
@@ -42,6 +43,12 @@ const app = new Vue({
                 this.text = ''
             }
         },
+        getRooms() {
+            console.log('hii');
+
+            this.socket.emit('getRooms', {});
+        }
+        ,
         receivedMessage(message) {
             this.messages.push(message)
         },
@@ -55,13 +62,21 @@ const app = new Vue({
             'query': 'token=' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE2ZDUxMzM5LWJjZTctNDQ1Mi1hY2E0LTdmMzUyMjEyNWM5MSIsImlhdCI6MTU4MTYxODMxMH0.K4D4FSODoRrmT6NQnh8d9XzhBhtDudestY98SRe62lA'
 
         });
+
         this.socket.on('connect', (message) => {
             // this.receivedMessage(message)
             console.log(message);
             console.log('connected');
+            this.getRooms();
+
         });
         this.socket.on('msgToClient', (message) => {
             this.receivedMessage(message)
+        });
+
+        this.socket.on('getRooms', (message) => {
+            console.log(message);
+            this.rooms = [...message];
         });
 
         this.socket.on('msgPrivateToClient', (message) => {

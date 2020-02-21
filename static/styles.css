@@ -5,3 +5,22 @@
 #app {
  margin-top: 2rem;
 }
+
+#app {
+    background: #eeeeee;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 2px 1px 1px 1px #eee;
+}
+
+#rooms {
+
+}
+#room {
+    background: #4582ee;
+    margin: 5px;
+    border-radius: 4px;
+    box-shadow: 1px 1px 1px;
+    padding: 4px;
+    color: #eeeeee;
+}
