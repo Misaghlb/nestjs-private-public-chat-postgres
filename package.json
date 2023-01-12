@@ -43,7 +43,7 @@
         "aws-sdk": "~2.549.0",
         "bcrypt": "~3.0.6",
         "class-transformer": "^0.2.3",
-        "class-validator": "^0.10.2",
+        "class-validator": "^0.14.0",
         "compression": "~1.7.4",
         "dotenv": "~8.1.0",
         "express": "~4.17.1",
